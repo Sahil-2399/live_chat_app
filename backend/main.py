@@ -18,8 +18,6 @@ def chat_ui():
     base_dir = os.path.dirname(os.path.abspath(__file__))
     file_path = os.path.join(base_dir, "frontend", "index.html")
 
-    if not os.path.exists(file_path):
-        return HTMLResponse(f"Frontend file not found at {file_path}", status_code=500)
-
     with open(file_path, "r", encoding="utf-8") as f:
         return f.read()
+
