@@ -1,50 +1,165 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Live Chat</title>
+    <title>Live Chat App</title>
     <style>
-        body { font-family: Arial; padding: 20px; }
-        #chat { border: 1px solid #ccc; height: 300px; overflow-y: auto; padding: 10px; }
-        input { margin-top: 10px; }
+        body {
+            font-family: Arial;
+            padding: 20px;
+        }
+
+        h2 {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .container {
+            display: flex;
+            gap: 20px;
+        }
+
+        .chat-panel {
+            width: 70%;
+            border: 1px solid #ccc;
+            padding: 10px;
+        }
+
+        .notification-panel {
+            width: 30%;
+            border: 1px solid #ccc;
+            padding: 10px;
+        }
+
+        #chat {
+            height: 300px;
+            overflow-y: auto;
+            border: 1px solid #eee;
+            padding: 10px;
+            margin-bottom: 10px;
+        }
+
+        .message {
+            margin-bottom: 5px;
+        }
+
+        .timestamp {
+            color: gray;
+            font-size: 12px;
+        }
+
+        .join {
+            color: green;
+            font-weight: bold;
+        }
+
+        .leave {
+            color: red;
+            font-weight: bold;
+        }
+
+        input {
+            width: 80%;
+            padding: 5px;
+        }
+
+        button {
+            padding: 6px 10px;
+        }
     </style>
 </head>
 <body>
 
-<h2>💬 Live Chat App</h2>
+<h2>💬 Live Chat Application</h2>
 
-<input id="username" placeholder="Your name" />
+<input id="username" placeholder="Enter your name" />
+<button onclick="joinChat()">Join</button>
+
 <br><br>
 
-<div id="chat"></div>
+<div class="container">
 
-<input id="message" placeholder="Type message..." />
-<button onclick="sendMessage()">Send</button>
+    <!-- CHAT PANEL -->
+    <div class="chat-panel">
+        <h3>Chat</h3>
+        <div id="chat"></div>
+
+        <input id="message" placeholder="Type a message..." />
+        <button onclick="sendMessage()">Send</button>
+    </div>
+
+    <!-- NOTIFICATION PANEL -->
+    <div class="notification-panel">
+        <h3>Notifications</h3>
+        <div id="notifications"></div>
+    </div>
+
+</div>
 
 <script>
-const socket = new WebSocket(
-    (location.protocol === "https:" ? "wss://" : "ws://") + location.host + "/ws/chat"
-);
+let socket;
+let username = "";
 
+function joinChat() {
+    username = document.getElementById("username").value;
+    if (!username) return;
 
-socket.onmessage = function(event) {
-    const data = JSON.parse(event.data);
-    const chatBox = document.getElementById("chat");
-    chatBox.innerHTML += `<div><b>${data.user}:</b> ${data.message}</div>`;
-    chatBox.scrollTop = chatBox.scrollHeight;
-};
+    socket = new WebSocket(
+        (location.protocol === "https:" ? "wss://" : "ws://") +
+        location.host + "/ws/chat"
+    );
+
+    socket.onopen = () => {
+        socket.send(JSON.stringify({
+            type: "join",
+            user: username
+        }));
+    };
+
+    socket.onmessage = (event) => {
+        const data = JSON.parse(event.data);
+
+        if (data.type === "message") {
+            addMessage(data);
+        }
+
+        if (data.type === "notification") {
+            addNotification(data);
+        }
+    };
+}
 
 function sendMessage() {
-    const user = document.getElementById("username").value;
     const msg = document.getElementById("message").value;
-
-    if (!user || !msg) return;
+    if (!msg) return;
 
     socket.send(JSON.stringify({
-        user: user,
+        user: username,
         message: msg
     }));
 
     document.getElementById("message").value = "";
+}
+
+function addMessage(data) {
+    const chat = document.getElementById("chat");
+    chat.innerHTML += `
+        <div class="message">
+            <b>${data.user}</b>: ${data.message}
+            <span class="timestamp">(${data.timestamp})</span>
+        </div>
+    `;
+    chat.scrollTop = chat.scrollHeight;
+}
+
+function addNotification(data) {
+    const box = document.getElementById("notifications");
+    const cls = data.event === "join" ? "join" : "leave";
+
+    box.innerHTML += `
+        <div class="${cls}">
+            ${data.user} ${data.event} at ${data.timestamp}
+        </div>
+    `;
 }
 </script>
 
