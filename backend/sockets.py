@@ -2,6 +2,7 @@ from fastapi import WebSocket, WebSocketDisconnect
 from typing import List
 from models import ChatMessage, SystemNotification
 from datetime import datetime
+from zoneinfo import ZoneInfo
 import json
 
 class ConnectionManager:
@@ -37,7 +38,7 @@ async def chat_socket(ws: WebSocket):
                 notification = SystemNotification(
                     event="join",
                     user=username,
-                    timestamp=datetime.now().strftime("%H:%M:%S")
+                    timestamp=datetime.now(ZoneInfo("Asia/Kolkata")).strftime("%H:%M:%S")
                 )
                 await manager.broadcast({
                     "type": "notification",
@@ -49,7 +50,7 @@ async def chat_socket(ws: WebSocket):
             msg = ChatMessage(
                 user=data["user"],
                 message=data["message"],
-                timestamp=datetime.now().strftime("%H:%M:%S")
+                timestamp=datetime.now(ZoneInfo("Asia/Kolkata")).strftime("%H:%M:%S")
             )
 
             await manager.broadcast({
@@ -64,7 +65,7 @@ async def chat_socket(ws: WebSocket):
             notification = SystemNotification(
                 event="leave",
                 user=username,
-                timestamp=datetime.now().strftime("%H:%M:%S")
+                timestamp=datetime.now(ZoneInfo("Asia/Kolkata")).strftime("%H:%M:%S")
             )
             await manager.broadcast({
                 "type": "notification",
